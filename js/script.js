@@ -1,3 +1,4 @@
+let numberOfMoves = 0
 
 function initGame() {
     const initialMessage = 'Com quantas cartas deseja jogar? Você deve escolher um número par entre 4 e 14.'
@@ -18,20 +19,14 @@ function initGame() {
     const mainContent = document.querySelector('.wrapper-main-content')
 
     for (let i = 0; i < howManyCards; i++) {
-        const infoAboutCard = {
-            id: i,
-            sourceBackImage: `./assets/${shuffledCardsBackFaceGif[i]}`
-        }
-        cardOuterHTML = createCard(infoAboutCard)
+        const sourceBackImage = `./assets/${shuffledCardsBackFaceGif[i]}`
+        cardOuterHTML = createCard(sourceBackImage)
         mainContent.innerHTML += cardOuterHTML
     }
 }
 
-function createCard(infoAboutCard) {
-
-    const {id, sourceBackImage} = infoAboutCard
-
-    const cardOuterHTML = `<div id="${id}" class="card" onclick="handleClickOnCard(this)">
+function createCard(sourceBackImage) {
+    const cardOuterHTML = `<div class="card" onclick="handleClickOnCard(this)">
         <div class="face front-face">
             <img src="./assets/front.png">
         </div>
@@ -44,10 +39,8 @@ function createCard(infoAboutCard) {
 }
 
 function getNumberOfCards(message) {
-
-    let howManyCards = prompt(`${message}`)
-
-    let response = handleInput(howManyCards)
+    const howManyCards = prompt(`${message}`)
+    const response = handleInput(howManyCards)
 
     if (response === true) {
         return Number(howManyCards)
@@ -66,13 +59,13 @@ function handleInput(stringInput) {
 
     const readyMessagesForOtherWrongAnswers = [
         'Eu sei que é difícil!',
-        'Alguma hora você consegue!'
+        'Alguma hora você consegue!',
+        'Tem que ser par entre 4 e 14!'
     ]
 
     if (isAValidNumber(stringInput)) return true
 
     let message
-
     if (isNaN(stringInput)) {
         message = pickRandomItemFromList(readyMessagesForNaN)
     } else {
@@ -108,12 +101,14 @@ function handleClickOnCard(card) {
     const isThereACardSelected = allSelectedCards.length === 1
 
     if (isThereACardSelected) {
+        numberOfMoves++
         const previousSelectedCard = allSelectedCards[0]
-
         const theCardsAreEqual = checkIfCardsAreEqual(card, previousSelectedCard)
 
         if (!theCardsAreEqual) {
             setTimeout(_ => unFlipCards([card, previousSelectedCard]), 500)
+        } else {
+            handleWhenSelectedCardsAreEqual()
         }
         // Movimento encerrado
         previousSelectedCard.classList.remove('selected')
@@ -122,6 +117,23 @@ function handleClickOnCard(card) {
         card.classList.add('selected')
     }
     
+}
+
+function handleWinGame() {
+    const animationTime = getAnimationDuration('.wrapper-main-content > .card > .face')
+
+    setTimeout(_ => alert(`Você ganhou em ${numberOfMoves} jogadas!`), animationTime)
+
+    setTimeout(restartGame, 700)
+}
+
+function handleWhenSelectedCardsAreEqual() {
+    const unflippedCards = document.querySelectorAll('.wrapper-main-content > .card:not(.flipped)')
+    const everyCardIsFlipped = unflippedCards.length === 0
+
+    if (everyCardIsFlipped) {
+        handleWinGame()
+    }
 }
 
 function createShuffledListOfPairsOfImages(listOfImages, howManyPairsOfImages) {
@@ -152,5 +164,27 @@ function checkIfCardsAreEqual(firstCard, secondCard) {
 function randomComparison() {
     return Math.random() - 0.5
 }
+
+function getAnimationDuration(cssSelector) {
+    const element = document.querySelector(cssSelector)
+
+    const stringAnimationDuration = getComputedStyle(element).transitionDuration
+
+    let animationTime = Number(stringAnimationDuration.replace('s', ''))
+
+    return 1000 * animationTime
+}
+
+function restartGame() {
+    const response = prompt('Deseja jogar outra partida?').toLowerCase()
+
+    if (response === 'sim') {
+        numberOfMoves = 0
+        document.querySelector('.wrapper-main-content').replaceChildren()
+
+        setTimeout(initGame, 700)
+    }
+}
+
 
 window.onload = initGame
